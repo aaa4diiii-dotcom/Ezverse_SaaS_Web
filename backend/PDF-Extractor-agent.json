@@ -1,0 +1,207 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "PDF-extractor",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6165c718-6182-4bb6-b41e-8537c9c33d02",
+      "name": "Webhook",
+      "webhookId": "797dfe55-03a1-4ebc-b543-44ba4cb0d0bf"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "=file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "1eb06e0b-6da8-4b52-a728-02e887747e41",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.cleaned_output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1136,
+        0
+      ],
+      "id": "d3a25b4e-4dc3-4c41-b43b-9009e8d65368",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the raw text from the uploaded PDF document to analyze and parse:\n\n<document_text>\n{{ $json.text }}\n</document_text>",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=<instructions>\nYou are a precise data extraction engine for the Ezverse PDF Scraper tool. \nAnalyze the provided document text and return a clean, structured JSON object following this exact schema. \nDo not include any conversational text, introduction, or markdown code block wrappers.\n</instructions>\n\n<schema>\n{\n  \"document_title\": \"Title here\",\n  \"summary\": \"Brief executive summary here\",\n  \"technical_findings\": [\"point 1\", \"point 2\"],\n  \"ethical_findings\": [\"point 1\", \"point 2\"],\n  \"conclusion\": \"Final summary statement\"\n}\n</schema>"
+            },
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "={{ $json.text }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        448,
+        0
+      ],
+      "id": "65cb2085-55d3-4cff-bb2c-4cd9ea8bc6b7",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        208
+      ],
+      "id": "45a0e4a6-a0fe-4b87-8513-ecb7a544b79c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "pisq4zZIOXzaPRQj",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n    if (item.json && item.json.text) {\n        let rawText = item.json.text;\n\n        // 1. Strip away any accidental markdown code block ticks if Gemini adds them\n        if (rawText.includes('```')) {\n            rawText = rawText.replace(/```[a-zA-Z]*\\n?/g, '').replace(/```/g, '');\n        }\n        rawText = rawText.trim();\n\n        try {\n            // 2. Parse the string into a real JavaScript object\n            const parsedData = JSON.parse(rawText);\n            \n            // 3. Re-build a beautiful, highly-readable text string for the UI panel\n            let displayOutput = \"\";\n            \n            if (parsedData.document_title) {\n                displayOutput += `DOCUMENT TITLE:\\n${parsedData.document_title}\\n\\n`;\n            }\n            \n            if (parsedData.summary) {\n                displayOutput += `SUMMARY:\\n${parsedData.summary}\\n\\n`;\n            }\n            \n            if (Array.isArray(parsedData.technical_findings) && parsedData.technical_findings.length > 0) {\n                displayOutput += `TECHNICAL FINDINGS:\\n`;\n                parsedData.technical_findings.forEach(point => {\n                    displayOutput += `• ${point}\\n`;\n                });\n                displayOutput += `\\n`;\n            }\n            \n            if (Array.isArray(parsedData.ethical_findings) && parsedData.ethical_findings.length > 0) {\n                displayOutput += `ETHICAL FINDINGS:\\n`;\n                parsedData.ethical_findings.forEach(point => {\n                    displayOutput += `• ${point}\\n`;\n                });\n                displayOutput += `\\n`;\n            }\n            \n            if (parsedData.conclusion) {\n                displayOutput += `CONCLUSION:\\n${parsedData.conclusion}`;\n            }\n\n            // 4. Send the clean formatting to your Lovable frontend keys\n            item.json.success = true;\n            item.json.cleaned_output = displayOutput.trim();\n            item.json.data = parsedData; // Keeps raw JSON structured if your UI needs it later\n            item.json.is_structured = true;\n\n        } catch (e) {\n            // Fallback: If it's not valid JSON, clean it as plain text\n            let plainText = rawText\n                .replace(/\\\\\"/g, '\"')\n                .replace(/[\\{\\}\\[\\]\"']/g, '')\n                .trim();\n                \n            item.json.success = true;\n            item.json.cleaned_output = plainText;\n            item.json.data = plainText;\n            item.json.is_structured = false;\n        }\n    } else {\n        item.json.success = false;\n        item.json.error = \"No valid data received from the LLM.\";\n    }\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        0
+      ],
+      "id": "5a5167d9-23fb-4562-934c-72ed5fa13491",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "sly-saloon-backlands.ngrok-free.dev",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+          "content-length": "217371",
+          "accept": "*/*",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "en-US,en;q=0.7",
+          "content-type": "multipart/form-data; boundary=----WebKitFormBoundaryHfMnRbGnmBnA9fCm",
+          "origin": "https://id-preview--7e31c99d-4296-4429-bf81-b8d300305836.lovable.app",
+          "priority": "u=1, i",
+          "referer": "https://id-preview--7e31c99d-4296-4429-bf81-b8d300305836.lovable.app/",
+          "sec-ch-ua": "\"Brave\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "cross-site",
+          "sec-gpc": "1",
+          "x-forwarded-for": "2404:7c80:5e:5030:7540:6d29:ef9f:7c20",
+          "x-forwarded-host": "sly-saloon-backlands.ngrok-free.dev",
+          "x-forwarded-proto": "https"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "filename": "17815074de3c9f8af9a5051978a72e2a83f1d18d.pdf",
+          "instructions": "extract this pdf"
+        },
+        "webhookUrl": "https://sly-saloon-backlands.ngrok-free.dev/webhook/PDF-extractor",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6973545116686097a20f8014587681d46413a37e2646020b7c22efad3b969e6"
+  }
+}

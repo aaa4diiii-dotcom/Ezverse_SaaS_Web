@@ -1,0 +1,11 @@
+node_modules
+dist
+.output
+.vinxi
+pnpm-lock.yaml
+package-lock.json
+bun.lock
+routeTree.gen.ts
+
+
+#// Updated template files for Tool Terra project
