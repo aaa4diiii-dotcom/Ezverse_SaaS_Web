@@ -8,9 +8,6 @@ function createSupabaseClient() {
   const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_URL : undefined) || (typeof process !== 'undefined' ? process.env.SUPABASE_URL : undefined);
   const SUPABASE_PUBLISHABLE_KEY = (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY : undefined) || (typeof process !== 'undefined' ? process.env.SUPABASE_PUBLISHABLE_KEY : undefined);
 
-  console.log("[Supabase DEBUG] SUPABASE_URL =", SUPABASE_URL);
-  console.log("[Supabase DEBUG] SUPABASE_PUBLISHABLE_KEY =", SUPABASE_PUBLISHABLE_KEY ? SUPABASE_PUBLISHABLE_KEY.substring(0, 15) + "..." : "undefined");
-
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || SUPABASE_URL === "undefined" || SUPABASE_PUBLISHABLE_KEY === "undefined") {
     const missing = [
       ...(!SUPABASE_URL || SUPABASE_URL === "undefined" ? ['SUPABASE_URL'] : []),
