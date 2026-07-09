@@ -67,7 +67,28 @@ serve(async (req) => {
           throw updateError;
         }
 
-        console.log(`Successfully added ${addedCredits} credits to user ${userId}`);
+        // Record purchase transaction
+        const { error: transactionError } = await supabase
+          .from("transactions")
+          .insert({
+            user_id: userId,
+            tool_id: null,
+            input_data: {
+              stripe_session_id: session.id,
+              price: session.amount_total ? session.amount_total / 100 : 0,
+              currency: session.currency || "inr",
+              plan: metadata.plan || "topup"
+            },
+            credits_used: -addedCredits,
+            status: "purchase"
+          });
+
+        if (transactionError) {
+          console.error(`Failed to record transaction for user ${userId}:`, transactionError);
+          throw transactionError;
+        }
+
+        console.log(`Successfully added ${addedCredits} credits to user ${userId} and logged transaction`);
       }
     }
 

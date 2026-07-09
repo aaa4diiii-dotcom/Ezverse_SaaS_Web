@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { Clock, Download, FileText, Trash2, Loader2, History as HistoryIcon } from "lucide-react";
+import { Clock, Download, FileText, Trash2, Loader2, History as HistoryIcon, Shield, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchToolRuns, deleteToolRun, type ToolRun } from "@/lib/tool-history";
 import { downloadTxt, downloadMd } from "@/lib/download";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/history")({
   head: () => ({
@@ -28,6 +29,9 @@ function HistoryPage() {
   const [runs, setRuns] = useState<ToolRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState<"personal" | "admin">("personal");
+  const [profiles, setProfiles] = useState<Record<string, { name: string; email: string }>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -37,20 +41,62 @@ function HistoryPage() {
     }
     let cancelled = false;
     setLoading(true);
-    fetchToolRuns()
-      .then((rows) => {
+
+    async function loadHistory() {
+      try {
+        const rows = await fetchToolRuns();
         if (cancelled) return;
         setRuns(rows);
         setActiveId(rows[0]?.id ?? null);
-      })
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load history"))
-      .finally(() => !cancelled && setLoading(false));
+
+        // Fetch user roles
+        const { data: roles, error: rolesError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
+
+        if (rolesError) throw rolesError;
+        const userIsAdmin = roles?.some((r: any) => r.role === "admin") || false;
+        
+        if (cancelled) return;
+        setIsAdmin(userIsAdmin);
+        if (userIsAdmin) {
+          setActiveTab("admin");
+        }
+
+        // Fetch profiles if admin
+        if (userIsAdmin) {
+          const { data: userProfiles, error: profilesError } = await supabase
+            .from("profiles")
+            .select("id, name, email");
+          
+          if (!profilesError && userProfiles && !cancelled) {
+            const profs: Record<string, { name: string; email: string }> = {};
+            userProfiles.forEach((p: any) => {
+              profs[p.id] = { name: p.name || "", email: p.email || "" };
+            });
+            setProfiles(profs);
+          }
+        }
+      } catch (e: any) {
+        toast.error(e instanceof Error ? e.message : "Failed to load history");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadHistory();
+
     return () => {
       cancelled = true;
     };
   }, [user, authLoading]);
 
-  const active = runs.find((r) => r.id === activeId) ?? null;
+  const displayedRuns = activeTab === "admin" && isAdmin
+    ? runs
+    : runs.filter((r) => r.user_id === user?.id);
+
+  const active = displayedRuns.find((r) => r.id === activeId) ?? displayedRuns[0] ?? null;
 
   const handleDelete = async (id: string) => {
     const prev = runs;
@@ -110,6 +156,36 @@ function HistoryPage() {
             Refresh
           </button>
         </div>
+        {isAdmin && (
+          <div className="mt-8 flex gap-2 border-b border-border pb-px">
+            <button
+              onClick={() => setActiveTab("admin")}
+              className={`pb-3 text-sm font-semibold px-4 transition-colors relative ${
+                activeTab === "admin"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                All User Runs (Admin View)
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab("personal")}
+              className={`pb-3 text-sm font-semibold px-4 transition-colors relative ${
+                activeTab === "personal"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                My Runs
+              </div>
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="container-page pb-24 grid gap-6 lg:grid-cols-[340px_1fr]">
@@ -119,18 +195,29 @@ function HistoryPage() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
               <span className="text-sm">Loading history…</span>
             </div>
-          ) : runs.length === 0 ? (
+          ) : displayedRuns.length === 0 ? (
             <div className="p-10 text-center">
               <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">No runs yet.</p>
-              <Link to="/tools" className="mt-3 inline-block text-sm text-primary hover:underline">
-                Try a tool →
-              </Link>
+              <p className="mt-3 text-sm text-muted-foreground font-semibold">No runs found</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {activeTab === "admin" 
+                  ? "No tool runs have been logged in the system yet."
+                  : "You haven't run any tools yet."}
+              </p>
+              {activeTab === "personal" && (
+                <Link to="/tools" className="mt-3 inline-block text-sm text-primary hover:underline">
+                  Try a tool →
+                </Link>
+              )}
             </div>
           ) : (
             <ul className="divide-y divide-border max-h-[70vh] overflow-y-auto">
-              {runs.map((r) => {
+              {displayedRuns.map((r) => {
                 const isActive = r.id === activeId;
+                const prof = profiles[r.user_id];
+                const userName = prof?.name || "No Name";
+                const userEmail = prof?.email || "Unknown User";
+
                 return (
                   <li key={r.id}>
                     <button
@@ -147,6 +234,11 @@ function HistoryPage() {
                           </span>
                         )}
                       </div>
+                      {activeTab === "admin" && isAdmin && (
+                        <div className="text-[11px] font-semibold text-foreground/80 mt-1 truncate">
+                          User: {userName} ({userEmail.split('@')[0]})
+                        </div>
+                      )}
                       <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
                         <Clock className="h-3 w-3" /> {formatDate(r.created_at)}
                       </div>
@@ -171,6 +263,19 @@ function HistoryPage() {
                     <Clock className="h-3 w-3" /> {formatDate(active.created_at)}
                   </div>
                 </div>
+                
+                {activeTab === "admin" && isAdmin && (
+                  <div className="mt-3 w-full rounded-lg border border-border bg-surface-2 p-3 text-xs">
+                    <div className="font-semibold text-foreground flex items-center gap-1">
+                      <User className="h-3.5 w-3.5 text-primary" /> User Details
+                    </div>
+                    <div className="mt-1.5 grid gap-1">
+                      <div><span className="text-muted-foreground">Name:</span> <span className="font-semibold">{profiles[active.user_id]?.name || "No Name"}</span></div>
+                      <div><span className="text-muted-foreground">Email:</span> <span className="font-semibold">{profiles[active.user_id]?.email || "Unknown User"}</span></div>
+                      <div className="flex items-center gap-1 mt-0.5"><span className="text-muted-foreground">UID:</span> <code className="font-mono text-muted-foreground/80 bg-background/50 px-1 py-0.5 rounded text-[10px]">{active.user_id}</code></div>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => downloadTxt(active.tool_slug, active.output ?? "")}

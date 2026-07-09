@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -25,6 +26,11 @@ import { Route as ToolsSalesLeadQualifierRouteImport } from './routes/tools.sale
 import { Route as ToolsPdfExtractorRouteImport } from './routes/tools.pdf-extractor'
 import { Route as ToolsSlugRouteImport } from './routes/tools.$slug'
 
+const TransactionsRoute = TransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/tools': typeof ToolsRouteWithChildren
+  '/transactions': typeof TransactionsRoute
   '/tools/$slug': typeof ToolsSlugRoute
   '/tools/pdf-extractor': typeof ToolsPdfExtractorRoute
   '/tools/sales-lead-qualifier': typeof ToolsSalesLeadQualifierRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/tools': typeof ToolsRouteWithChildren
+  '/transactions': typeof TransactionsRoute
   '/tools/$slug': typeof ToolsSlugRoute
   '/tools/pdf-extractor': typeof ToolsPdfExtractorRoute
   '/tools/sales-lead-qualifier': typeof ToolsSalesLeadQualifierRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/tools': typeof ToolsRouteWithChildren
+  '/transactions': typeof TransactionsRoute
   '/tools/$slug': typeof ToolsSlugRoute
   '/tools/pdf-extractor': typeof ToolsPdfExtractorRoute
   '/tools/sales-lead-qualifier': typeof ToolsSalesLeadQualifierRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/tools'
+    | '/transactions'
     | '/tools/$slug'
     | '/tools/pdf-extractor'
     | '/tools/sales-lead-qualifier'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/tools'
+    | '/transactions'
     | '/tools/$slug'
     | '/tools/pdf-extractor'
     | '/tools/sales-lead-qualifier'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/tools'
+    | '/transactions'
     | '/tools/$slug'
     | '/tools/pdf-extractor'
     | '/tools/sales-lead-qualifier'
@@ -220,10 +232,18 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ToolsRoute: typeof ToolsRouteWithChildren
+  TransactionsRoute: typeof TransactionsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/transactions': {
+      id: '/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof TransactionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tools': {
       id: '/tools'
       path: '/tools'
@@ -359,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ToolsRoute: ToolsRouteWithChildren,
+  TransactionsRoute: TransactionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

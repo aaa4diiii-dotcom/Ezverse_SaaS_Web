@@ -105,12 +105,19 @@ function Dashboard() {
             { icon: Zap, label: "Runs this month", value: String(runCount) },
             { icon: TrendingUp, label: "Most used", value: mostUsed },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl border border-border bg-surface-1 p-5">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-                <s.icon className="h-3.5 w-3.5 text-primary" />
-                {s.label}
+            <div key={s.label} className="rounded-xl border border-border bg-surface-1 p-5 flex flex-col justify-between min-h-[110px]">
+              <div>
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                  <s.icon className="h-3.5 w-3.5 text-primary" />
+                  {s.label}
+                </div>
+                <div className="mt-3 text-2xl font-bold">{s.value}</div>
               </div>
-              <div className="mt-3 text-2xl font-bold">{s.value}</div>
+              {s.label === "Credits remaining" && (
+                <Link to="/transactions" className="mt-2 text-xs text-primary hover:underline inline-flex items-center gap-1">
+                  View billing history <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              )}
             </div>
           ))}
         </div>

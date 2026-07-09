@@ -13,6 +13,7 @@ const navLinks = [
   { to: "/docs", label: "Docs" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/history", label: "History" },
+  { to: "/transactions", label: "Transactions" },
 ];
 
 export function Navbar() {

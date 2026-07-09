@@ -21,6 +21,7 @@ export type Database = {
           email: string | null
           id: string
           name: string | null
+          stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           email?: string | null
           id: string
           name?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -50,7 +53,9 @@ export type Database = {
           status: string
           tool_name: string
           tool_slug: string
+          user_email: string | null
           user_id: string
+          user_name: string | null
         }
         Insert: {
           created_at?: string
@@ -60,7 +65,9 @@ export type Database = {
           status?: string
           tool_name: string
           tool_slug: string
+          user_email?: string | null
           user_id: string
+          user_name?: string | null
         }
         Update: {
           created_at?: string
@@ -70,7 +77,9 @@ export type Database = {
           status?: string
           tool_name?: string
           tool_slug?: string
+          user_email?: string | null
           user_id?: string
+          user_name?: string | null
         }
         Relationships: []
       }
@@ -128,7 +137,9 @@ export type Database = {
           output_data: Json | null
           status: string | null
           tool_id: string | null
+          user_email: string | null
           user_id: string | null
+          user_name: string | null
         }
         Insert: {
           created_at?: string | null
@@ -138,7 +149,9 @@ export type Database = {
           output_data?: Json | null
           status?: string | null
           tool_id?: string | null
+          user_email?: string | null
           user_id?: string | null
+          user_name?: string | null
         }
         Update: {
           created_at?: string | null
@@ -148,7 +161,9 @@ export type Database = {
           output_data?: Json | null
           status?: string | null
           tool_id?: string | null
+          user_email?: string | null
           user_id?: string | null
+          user_name?: string | null
         }
         Relationships: []
       }
