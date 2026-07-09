@@ -137,13 +137,8 @@ function Home() {
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((t) => {
             const Icon = CATEGORY_ICONS[t.category];
-            return (
-              <Link
-                key={t.slug}
-                to="/tools/$slug"
-                params={{ slug: t.slug }}
-                className="group rounded-xl border border-border bg-surface-1 p-5 hover:border-primary transition-colors flex flex-col"
-              >
+            const cardContent = (
+              <>
                 <div className="flex items-start justify-between">
                   <span className="grid h-9 w-9 place-items-center rounded-md bg-primary/10 ring-1 ring-primary/30 text-primary">
                     <Icon className="h-4 w-4" />
@@ -156,6 +151,34 @@ function Home() {
                   <span className="text-muted-foreground">{t.credits} credits / run</span>
                   <span className="text-primary inline-flex items-center gap-1">Try <ArrowUpRight className="h-3 w-3" /></span>
                 </div>
+              </>
+            );
+
+            const className = "group rounded-xl border border-border bg-surface-1 p-5 hover:border-primary transition-colors flex flex-col";
+
+            if (t.slug === "pdf-extractor") {
+              return (
+                <Link key={t.slug} to="/tools/pdf-extractor" className={className}>
+                  {cardContent}
+                </Link>
+              );
+            }
+            if (t.slug === "sales-lead-qualifier") {
+              return (
+                <Link key={t.slug} to="/tools/sales-lead-qualifier" className={className}>
+                  {cardContent}
+                </Link>
+              );
+            }
+
+            return (
+              <Link
+                key={t.slug}
+                to="/tools/$slug"
+                params={{ slug: t.slug }}
+                className={className}
+              >
+                {cardContent}
               </Link>
             );
           })}

@@ -161,20 +161,45 @@ function Dashboard() {
             <Link to="/tools" className="text-xs text-primary hover:underline">Browse tools</Link>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {favs.map((t) => (
-              <Link
-                key={t.slug}
-                to="/tools/$slug"
-                params={{ slug: t.slug }}
-                className="group rounded-lg border border-border p-3 hover:border-primary transition-colors"
-              >
-                <div className="text-[11px] uppercase tracking-wider text-primary">{t.category}</div>
-                <div className="mt-1 text-sm font-medium group-hover:text-primary transition-colors flex items-center justify-between">
-                  {t.name}
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </div>
-              </Link>
-            ))}
+            {favs.map((t) => {
+              const cardContent = (
+                <>
+                  <div className="text-[11px] uppercase tracking-wider text-primary">{t.category}</div>
+                  <div className="mt-1 text-sm font-medium group-hover:text-primary transition-colors flex items-center justify-between">
+                    {t.name}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </div>
+                </>
+              );
+
+              const className = "group rounded-lg border border-border p-3 hover:border-primary transition-colors";
+
+              if (t.slug === "pdf-extractor") {
+                return (
+                  <Link key={t.slug} to="/tools/pdf-extractor" className={className}>
+                    {cardContent}
+                  </Link>
+                );
+              }
+              if (t.slug === "sales-lead-qualifier") {
+                return (
+                  <Link key={t.slug} to="/tools/sales-lead-qualifier" className={className}>
+                    {cardContent}
+                  </Link>
+                );
+              }
+
+              return (
+                <Link
+                  key={t.slug}
+                  to="/tools/$slug"
+                  params={{ slug: t.slug }}
+                  className={className}
+                >
+                  {cardContent}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

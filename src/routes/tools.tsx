@@ -97,33 +97,58 @@ function ToolsIndex() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((t) => (
-              <Link
-                key={t.slug}
-                to="/tools/$slug"
-                params={{ slug: t.slug }}
-                className="group rounded-xl border border-border bg-surface-1 p-5 hover:border-primary transition-colors flex flex-col"
-              >
-                <div className="flex items-start justify-between">
-                  <span className="text-[11px] uppercase tracking-wider text-primary">{t.category}</span>
-                  {t.popular && (
-                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                      Popular
+            {filtered.map((t) => {
+              const cardContent = (
+                <>
+                  <div className="flex items-start justify-between">
+                    <span className="text-[11px] uppercase tracking-wider text-primary">{t.category}</span>
+                    {t.popular && (
+                      <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                        Popular
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mt-3 text-base font-semibold group-hover:text-primary transition-colors">
+                    {t.name}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground flex-1">{t.tagline}</p>
+                  <div className="mt-4 flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">{t.credits} credits / run</span>
+                    <span className="text-primary inline-flex items-center gap-1">
+                      Try <ArrowUpRight className="h-3 w-3" />
                     </span>
-                  )}
-                </div>
-                <h3 className="mt-3 text-base font-semibold group-hover:text-primary transition-colors">
-                  {t.name}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground flex-1">{t.tagline}</p>
-                <div className="mt-4 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{t.credits} credits / run</span>
-                  <span className="text-primary inline-flex items-center gap-1">
-                    Try <ArrowUpRight className="h-3 w-3" />
-                  </span>
-                </div>
-              </Link>
-            ))}
+                  </div>
+                </>
+              );
+
+              const className = "group rounded-xl border border-border bg-surface-1 p-5 hover:border-primary transition-colors flex flex-col";
+
+              if (t.slug === "pdf-extractor") {
+                return (
+                  <Link key={t.slug} to="/tools/pdf-extractor" className={className}>
+                    {cardContent}
+                  </Link>
+                );
+              }
+              if (t.slug === "sales-lead-qualifier") {
+                return (
+                  <Link key={t.slug} to="/tools/sales-lead-qualifier" className={className}>
+                    {cardContent}
+                  </Link>
+                );
+              }
+
+              return (
+                <Link
+                  key={t.slug}
+                  to="/tools/$slug"
+                  params={{ slug: t.slug }}
+                  className={className}
+                >
+                  {cardContent}
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>
